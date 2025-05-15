@@ -1,0 +1,7 @@
+name: keycloak-client
+apiVersion: v2
+version: 0.1.0
+dependencies:
+  - name: keycloak
+    version: 24.3.1
+    repository: "file://../charts/keycloak-24.3.1"

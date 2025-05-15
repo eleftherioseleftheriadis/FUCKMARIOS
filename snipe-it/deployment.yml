@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: snipe
+spec:
+  selector:
+    matchLabels:
+      app: snipe 
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: snipe
+    spec:
+      containers:
+        - name: snipe
+          image: snipe/snipe-it:7.1.15
+          livenessProbe:
+            httpGet:
+              port: 80
+          resources:
+            limits:
+              memory: 512Mi
+              cpu: "1"
+            requests:
+              memory: 256Mi
+              cpu: "0.2"
+          ports:
+            - containerPort: 80
+#          volumeMounts:
+#            - name: snipe-pvolume
+#              mountPath: /var/lib/snipeit     
+          env:
+            - name: APP_ENV
+              value: "production"
+            - name: APP_DEBUG
+              value: "false"
+            - name: APP_KEY
+              value: "base64:D5oGA+zhFSVA3VwuoZoQ21RAcwBtJv/RGiqOcZ7BUvI="
+            - name: APP_URL
+              value: "http://127.0.0.1:9000"
+            - name: APP_TIMEZONE
+              value: "Europe/Paris"
+            - name: APP_LOCALE
+              value: "en"
+            - name: DB_CONNECTION
+              value: "mysql"
+            - name: DB_HOST
+              value: "snipe-it-prod-mysql-rds-ec1-01.ctq2m22g2owr.eu-central-1.rds.amazonaws.com"
+            - name: DB_DATABASE
+              value: "snipe"
+            - name: DB_USERNAME
+              value: "snipeit"
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: snipe
+                  key: DB_PASSWORD
+            - name: DB_PORT
+              value: "3306"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: snipe-entrypoint
+  labels:
+    app: snipe
+spec:
+  ports:
+    - port: 80
+  selector:
+    app: snipe
+
+#      volumes:
+#        - name: snipe-pvolume
+#          persistentVolumeClaim:
+#            claimName: snipe-pvolume
+#---
+#apiVersion: v1
+#kind: PersistentVolumeClaim
+#metadata:
+#  name: snipe-pvolume
+#  labels:
+#    app: snipe
+#spec:
+#  accessModes:
+#    - ReadWriteOnce
+#  resources:
+#    requests:
+#      storage: 5Gi

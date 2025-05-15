@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mt4-appsettings-cm
+data:
+  appsettings.json: |
+    {
+        "Logging": {
+          "LogLevel": {
+            "Default": "Debug",
+            "System": "Information",
+            "Microsoft": "Information"
+          }
+        },
+        "Statements": {
+          "Processor": [
+            {
+              "ServerId": 1,
+              "ServerVersion": "mt4",
+              "TableName": "daily_statements_mt4",
+              "ConnectionName": "Connection1",
+              "FoldersConfiguration": {
+                "Include": [
+                  "/app/mt-statements"
+                ],
+                "Exclude": [
+                  "C:\\Users\\Burkay\\Desktop\\Test\\Test-Exclude\\Sub-Ex"
+                ],
+                "FileExtensions": [
+                  "*.htm",
+                  "*.zip"
+
+                ]
+              }
+            }
+          ],
+          "DatabaseConfiguration": [
+            {
+              "Name": "Connection1",
+              "ConnectionString": "",
+              "TableConfiguration ": ""
+            }
+          ],
+          "LoggerConfiguration": {
+            "Folder": "mt-statements",
+            "FileName": "worklog_{year}_{month}_{day}.log"
+          }
+        }
+      }

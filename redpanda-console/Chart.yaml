@@ -1,0 +1,7 @@
+name: redpanda
+apiVersion: v2
+version: 0.1.0
+dependencies:
+  - name: console
+    version: 0.7.31
+    repository: "https://charts.redpanda.com"

@@ -1,0 +1,9 @@
+apiVersion: v2
+name: zabbix-common-template
+description: A Helm chart for deploying the Strapi application
+version: 0.1.0
+appVersion: 5.7.0
+dependencies:
+  - name: zabbix-common-template
+    version: 0.1.0
+    repository: "file://../kubernetes-helm"

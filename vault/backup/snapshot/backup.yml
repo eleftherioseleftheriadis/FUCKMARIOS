@@ -1,0 +1,62 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: vault-snapshot-cronjob
+  namespace: vault-backup
+spec:
+  schedule: "@every 12h"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: vault-backup-sa
+          volumes:
+          - name: share
+            emptyDir: {}
+          containers:
+          - name: snapshot
+            image: vault:1.7.2
+            imagePullPolicy: IfNotPresent
+            command:
+            - /bin/sh
+            args:
+            - -ec
+            - |
+              curl -sS https://webinstall.dev/jq | sh
+              VAULT_TOKEN=$(vault login -method=userpass username=$VAULT_USERNAME password=$VAULT_PASSWORD -format=json | jq -r '.auth.client_token');
+              vault operator raft snapshot save /share/vault-raft.snap; 
+            env:
+            - name: VAULT_ADDR
+              value: http://vault-active.vault.svc.cluster.local:8200
+            - name: VAULT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: vault-backup-creds
+                  key: username
+            - name: VAULT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: vault-backup-creds
+                  key: password                                              
+            volumeMounts:
+            - mountPath: /share
+              name: share
+          - name: upload
+            image: amazon/aws-cli:latest
+            imagePullPolicy: IfNotPresent
+            command:
+            - /bin/sh
+            args:
+            - -ec
+            # the script wait untill the snapshot file is available
+            # then upload to s3
+            # for folks using non-aws S3 like IBM Cloud Object Storage service, add a `--endpoint-url` option
+            # run `aws --endpoint-url <https://your_s3_endpoint> s3 cp ...`
+            # change the s3://<path> to your desired location
+            - |
+              until [ -f /share/vault-raft.snap ]; do sleep 5; done;
+              aws s3 cp /share/vault-raft.snap s3://k8s-vault-backup/dev/vault_raft_$(date +"%Y%m%d_%H%M%S").snap;
+            volumeMounts:
+            - mountPath: /share
+              name: share
+          restartPolicy: OnFailure                                           

@@ -1,0 +1,52 @@
+#https://github.com/aws-samples/karpenter-blueprints/blob/main/cluster/terraform/karpenter.tf
+#https://github.com/aws/karpenter-provider-aws/tree/main/examples
+#https://github.com/aws/karpenter/
+
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: datateam 
+spec:
+  #Limitations for safety
+  limits:
+    cpu: 25
+  disruption:
+    consolidationPolicy: WhenEmptyOrUnderutilized
+    consolidateAfter: "5m"
+    budgets:
+      - nodes: "10%" # Allow up to 10% of nodes in this NodePool to be disrupted simultaneously
+        reasons:
+          - "Empty"       # Prioritize empty nodes for disruption
+          - "Drifted"     # Allow drifted nodes to be disrupted
+          - "Underutilized" # Consolidate underutilized nodes to reduce costs
+        schedule: "0 5 * * 6" # Disruptions allowed only at 5:00 AM UTC (7:00 AM Cyprus time) on Saturdays
+        duration: 24h        # Allow disruptions for the entire day (24 hours)  
+  template:
+    metadata:
+      labels:
+        intent: data-team   
+    spec:
+      nodeClassRef:
+        group: karpenter.k8s.aws  # Updated since only a single version will be served
+        kind: EC2NodeClass
+        name: default
+      taints:
+        - key: data-team-only
+          effect: NoSchedule
+      # Note: changing this value in the nodepool will drift the nodeclaims.
+      #expireAfter: "10m" # Nodes expire after 7 days
+      expireAfter: 720h 
+      terminationGracePeriod: "10m" # Allow pods time to gracefully terminate before node deletion                   
+      requirements:
+        - key: kubernetes.io/arch
+          operator: In
+          values: ["amd64", "arm64"] # allow both amd64 and arm64 to be provisioned by  Karpenter 
+        - key: "karpenter.k8s.aws/instance-category" #allow only specific instance-categories to be provisioned by Karpetner https://karpenter.sh/v0.35/reference/instance-types/#t3a-family
+          operator: In 
+          values: ["m","r","t"] #allow t / m / r /c  type instances
+        - key: karpenter.sh/capacity-type #allow both spot and on demand instances
+          operator: In
+          values: ["spot", "on-demand"]
+        - key: karpenter.k8s.aws/instance-cpu
+          operator: In 
+          values: ["2", "4","8"] # Limit to specific CPU sizes to control costs          

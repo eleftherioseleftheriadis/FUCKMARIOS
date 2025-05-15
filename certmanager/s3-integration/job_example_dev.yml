@@ -1,0 +1,22 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: upload-certificate-job
+  namespace: cert-manager
+spec:
+  template:
+    spec:
+      serviceAccountName: s3-certs-replicator-service-account
+      containers:
+      - name: aws-cli
+        image: amazon/aws-cli
+        command: ["sh", "-c", "aws s3 cp --recursive /ingotbrokers.dev/. s3://ingotbrokers-certs/dev/ingotbrokers.dev "]
+        volumeMounts:
+        - name: certs
+          mountPath: /ingotbrokers.dev
+      restartPolicy: Never
+      volumes:
+      - name: certs
+        secret:
+          secretName: letsencrypt-cert
+  backoffLimit: 4          

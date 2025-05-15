@@ -1,0 +1,31 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: upload-certificate-cronjob
+  namespace: cert-manager
+spec:
+  schedule: "0 0 * * *" # Runs daily at midnight
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: s3-certs-replicator-service-account
+          containers:
+          - name: aws-cli
+            image: amazon/aws-cli
+            command: ["sh", "-c", "aws s3 cp /ingotbrokers.app/ s3://ingotbrokers-certs/prod/ingotbrokers.app/ --recursive --exclude '*' --include 'tls*' "]
+            volumeMounts:
+            - name: certs
+              mountPath: /ingotbrokers.app
+          restartPolicy: Never
+          volumes:
+          - name: certs
+            secret:
+              secretName: letsencrypt-cert
+          # Adding tolerations
+          tolerations:
+          - key: "type"
+            operator: "Equal"
+            value: "arm_64"
+            effect: "NoSchedule"              
+      backoffLimit: 4

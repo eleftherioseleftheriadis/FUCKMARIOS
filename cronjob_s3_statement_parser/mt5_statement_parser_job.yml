@@ -1,0 +1,56 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: mt5-statement-parser-cronjob
+  namespace: data-engineering
+spec:
+  schedule:  "00 03 * * *" # Run at 7 AM every day Frankfurt, Germany (UTC+2)
+  jobTemplate:
+    spec:
+      backoffLimit: 4
+      activeDeadlineSeconds: 300  # 5 minutes (300 seconds)
+      template:
+        spec:
+          restartPolicy: Never
+          serviceAccountName: statementparser-service-account
+          nodeSelector:
+            kubernetes.io/arch: amd64
+          tolerations:
+          - key: "type"
+            operator: "Equal"
+            value: "amd_64"
+            effect: "NoSchedule"                  
+          containers:
+          - name: statement-parser-mt5
+            image: 637423636753.dkr.ecr.eu-central-1.amazonaws.com/cosmos.statements.parser.host:0.0.21
+            volumeMounts:
+            - name: s3-files
+              mountPath: /app/mt-statements
+            - name: appsettings
+              mountPath: /app/appsettings.json
+              subPath: appsettings.json                
+            env:
+            - name: Statements__DatabaseConfiguration__0__ConnectionString
+              valueFrom:
+                secretKeyRef:
+                  name: mt5-statement-creds
+                  key: db                                   
+          initContainers:      
+          - name: init-s3-download
+            image: amazon/aws-cli:latest
+            command:
+            - "/bin/sh"
+            - "-c"
+            - |
+              PREVIOUS_DATE=$(date -d "yesterday" +"%Y.%m.%d")
+              echo $PREVIOUS_DATE
+              aws s3 sync s3://mt5-live1-statements/${PREVIOUS_DATE}.daily/ /mt-statements/         
+            volumeMounts:
+            - name: s3-files
+              mountPath: /mt-statements     
+          volumes:
+          - name: s3-files
+            emptyDir: {}
+          - name: appsettings
+            configMap:
+              name: mt5-appsettings-cm      

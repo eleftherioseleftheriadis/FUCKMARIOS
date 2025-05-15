@@ -1,0 +1,62 @@
+#https://github.com/aws-samples/karpenter-blueprints/blob/main/cluster/terraform/karpenter.tf
+#https://github.com/aws/karpenter-provider-aws/tree/main/examples
+#https://github.com/aws/karpenter/
+
+apiVersion: karpenter.k8s.aws/v1
+kind: EC2NodeClass
+metadata:
+  name: default
+spec:
+  amiSelectorTerms: 
+  - alias: al2@latest
+  role: "AmazonEKSNodeRole-dev" # replace with your cluster name-
+  subnetSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "eks_cluster_dev" # replace with your cluster name
+  securityGroupSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "eks_cluster_dev" # replace with your cluster name
+  tags:
+    IntentLabel: apps
+    KarpenterNodePoolName: default
+    NodeType: default
+    intent: apps
+    karpenter.sh/discovery: eks_cluster_dev
+    project: karpenter-blueprints        
+---
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: default 
+spec:
+  #Limitations for safety
+  limits:
+    cpu: 13
+  disruption:
+    consolidationPolicy: WhenEmptyOrUnderutilized
+    consolidateAfter: 10m       
+  template:
+    metadata:
+      labels:
+        intent: apps   
+    spec:
+      nodeClassRef:
+        group: karpenter.k8s.aws  # Updated since only a single version will be served
+        kind: EC2NodeClass
+        name: default    
+      requirements:
+        - key: kubernetes.io/arch
+          operator: In
+          values: ["amd64", "arm64"] # allow both amd64 and arm64 to be provisioned by  Karpenter 
+        - key: "karpenter.k8s.aws/instance-category" #allow only specific instance-categories to be provisioned by Karpetner https://karpenter.sh/v0.35/reference/instance-types/#t3a-family
+          operator: In 
+          values: ["t", "m"] #allow t / m type instances
+        - key: karpenter.sh/capacity-type #allow both spot and on demand instances
+          operator: In
+          values: ["spot", "on-demand"]
+        - key: karpenter.k8s.aws/instance-cpu #number of CPU instance need to have minimum 2 max 4
+          operator: In
+          values: ["2", "4"]
+        - key: karpenter.k8s.aws/instance-memory #number of RAM instance need to have minimum 4GB max 8GB
+          operator: In
+          values: ["4096", "8192"]

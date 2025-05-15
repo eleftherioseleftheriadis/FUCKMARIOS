@@ -1,0 +1,10 @@
+name: my-cert-manager
+apiVersion: v2
+version: 0.1.0
+dependencies:
+  - name: cert-manager
+    version: 1.17.1
+    repository: "https://charts.jetstack.io"
+  - name: prometheus-rules
+    version: "0.1.0"
+    repository: "file://prometheus-rules"    

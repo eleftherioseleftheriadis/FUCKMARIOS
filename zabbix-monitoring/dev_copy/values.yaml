@@ -1,0 +1,118 @@
+zabbix-common-template:
+  nameOverride: "zabbix"
+  fullnameOverride: "zabbix-monitoring"
+  kube-state-metrics:
+    enabled: false
+  rbac:
+    create: true
+    additionalRulesForClusterRole: []
+  serviceAccount:
+    create: true
+    name: zabbix-service-account
+  zabbixProxy:
+    enabled: true
+    containerSecurityContext: {}
+    resources: {}
+    image:
+      repository: 637423636753.dkr.ecr.eu-west-1.amazonaws.com/zabbix_dev
+      tag: 0.0.4-zabbixProxy
+      pullPolicy: Always
+      pullSecrets: []
+    env:
+      - name: ZBX_SERVER_PORT
+        value: 10051
+      - name: ZBX_PROXYMODE
+        value: "0"
+      - name: ZBX_HOSTNAME
+        value: zabbix-proxy-eks-dev
+      - name: ZBX_SERVER_HOST
+        value: "zabbix.ingotbrokers.app"
+      - name: ZBX_DEBUGLEVEL
+        value: "3"
+      - name: ZBX_CACHESIZE
+        value: 128M
+      - name: ZBX_JAVAGATEWAY_ENABLE
+        value: "false"
+      - name: ZBX_PROXYCONFIGFREQUENCY
+        value: "10"
+    service:
+      annotations: {}
+      labels: {}
+      type: ClusterIP
+      port: 10051
+      targetPort: 10051
+      externalIPs: []
+      loadBalancerIP: ""
+      loadBalancerSourceRanges: []
+    nodeselector: {}
+    tolerations: {}
+    affinity: {}
+    persistentVolume:
+      enabled: false
+      accessModes:
+        - ReadWriteOnce
+      annotations: {}
+      existingClaim: ""
+      mountPath: /data
+      size: 2Gi
+      storageClass: "-"
+      volumeBindingMode: ""
+      subPath: ""
+  zabbixAgent:
+    enabled: true
+    resources: {}
+    securityContext: {}
+    containerSecurityContext: {}
+    hostNetwork: true
+    dnsConfig: {}
+    hostPID: true
+    hostRootFsMount: true
+    extraHostVolumeMounts: []
+    image:
+      repository: 637423636753.dkr.ecr.eu-west-1.amazonaws.com/zabbix_dev
+      tag: 0.0.4-zabbixAgent
+      pullPolicy: Always
+      pullSecrets: []
+    env:
+      - name: ZBX_SERVER_PORT
+        value: "10051"
+      - name: ZBX_PASSIVE_ALLOW
+        value: "true"
+      - name: ZBX_ACTIVE_ALLOW
+        value: "false"
+      - name: ZBX_DEBUGLEVEL
+        value: "3"
+      - name: ZBX_TIMEOUT
+        value: "4"
+      - name: ZBX_PASSIVESERVERS
+        value: "0.0.0.0/0"
+    nodeselector: {}
+    tolerations:
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/control-plane
+    affinity: {}
+    serviceAccount:
+      create: true
+      name: zabbix-agent-service-account
+      annotations: {}
+      imagePullSecrets: []
+      automountServiceAccountToken: false
+    service:
+      type: ClusterIP
+      port: 10050
+      targetPort: 10050
+      nodePort: 10050
+      portName: zabbix-agent
+      listenOnAllInterfaces: true
+    rbac:
+      create: true
+      pspEnabled: false
+      pspAnnotations: {}
+zabbixProxy:
+  image:
+    repository: 637423636753.dkr.ecr.eu-west-1.amazonaws.com/zabbix_dev
+    tag: 0.0.3-zabbixProxy
+zabbixAgent:
+  image:
+    repository: 637423636753.dkr.ecr.eu-west-1.amazonaws.com/zabbix_dev
+    tag: 0.0.3-zabbixAgent

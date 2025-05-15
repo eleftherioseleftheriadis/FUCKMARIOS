@@ -1,0 +1,18 @@
+#certificate issuing authority which can be referenced as part of issuerRef fields
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-clusterissuer
+spec:
+  acme:
+    email: devops@IngotBrokers.com
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: letsencrypt-private-key
+    solvers:
+    - dns01:
+        cloudflare:
+          email: devops@IngotBrokers.com
+          apiTokenSecretRef:
+            name: cloudflare-api-credentials
+            key: api
