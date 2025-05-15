@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd
+  namespace: argocd2
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/IngotTech.git
+    targetRevision: main
+    path: / # Path in your repo where the Helm chart or manifests live
+    helm:
+      valueFiles:
+        - values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

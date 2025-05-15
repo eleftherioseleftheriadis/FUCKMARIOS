@@ -1,0 +1,92 @@
+#    helm:	
+#      values: |	
+#        githubConfigUrl: "https://github.com/IngotTech"	
+#        githubConfigSecret: gha-runner-secret	
+#        namespaceOverride: arc-runners  # Critical fix	
+# 	
+#        runnerScaleSetName: "arc-runner-set"	
+#        controllerServiceAccount:	
+#          name: gha-runner-scale-set-controller-gha-rs-controller	
+#          namespace: arc-systems	
+# 	
+#        scaleSet:	
+#          minRunners: 0	
+#          maxRunners: 10	
+#          runnerScaleDownTimeoutSeconds: 900	
+# 	
+#        containerMode:	
+#          type: "dind"	
+# 	
+#        metrics:	
+#          listenerMetrics:	
+#            enabled: true	
+#            port: 8080	
+#            endpoint: /metrics	
+#        listenerNamespace: arc-runners	
+#        template:	
+#          metadata: {}	
+#          spec:	
+#            containers:	
+#              - name: runner	
+#                image: ghcr.io/actions/actions-runner:latest	
+#                command: ["/home/runner/run.sh"]	
+# 	
+#        labels:	
+#          arc-runner-set: ""  # Map format instead of list
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  creationTimestamp: '2025-05-14T13:40:11Z'
+  generation: 533
+  labels:
+    argocd.argoproj.io/instance: runner-sets
+  name: arc-runner-set
+  namespace: argocd
+  resourceVersion: '224458028'
+  uid: 1883fe14-7bb1-434c-a238-f312afe44327
+spec:
+  destination:
+    namespace: arc-runners
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    chart: gha-runner-scale-set
+    helm:
+      values: |
+        githubConfigUrl: "https://github.com/IngotTech"
+        githubConfigSecret: gha-runner-secret
+        namespaceOverride: arc-runners  # Critical fix
+
+        runnerScaleSetName: "arc-runner-set"
+        controllerServiceAccount:
+          name: gha-runner-scale-set-controller-gha-rs-controller
+          namespace: arc-systems
+
+        scaleSet:
+          minRunners: 0
+          maxRunners: 10
+          runnerScaleDownTimeoutSeconds: 900
+
+        containerMode:
+          type: "dind"
+
+        metrics:
+          listenerMetrics:
+            enabled: true
+            port: 8080
+            endpoint: /metrics
+        listenerNamespace: arc-runners
+        template:
+          metadata: {}
+          spec:
+            containers:
+              - name: runner
+                image: ghcr.io/actions/actions-runner:latest
+                command: ["/home/runner/run.sh"]
+
+        labels:
+          arc-runner-set: ""  # Map format instead of list
+    repoURL: ghcr.io/actions/actions-runner-controller-charts
+    targetRevision: 0.11.0
+  syncPolicy:
+    automated: {}

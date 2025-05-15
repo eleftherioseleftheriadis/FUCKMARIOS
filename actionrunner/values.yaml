@@ -1,0 +1,56 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: arc-controller
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: ServerSideApply=true
+    argocd.argoproj.io/sync-wave: "2"  # CRDs deploy first (wave 1)
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: arc-systems
+  source:
+    chart: gha-runner-scale-set-controller
+    repoURL: ghcr.io/actions/actions-runner-controller-charts
+    targetRevision: 0.11.0
+    helm:
+      skipCrds: false
+      values: |
+        githubConfigSecretNamespace: arc-runners
+        githubApp:
+          github_app_id: "1245274"
+          github_app_installation_id: "66042691"
+          github_app_private_key: |
+            -----BEGIN RSA PRIVATE KEY-----
+            MIIEpAIBAAKCAQEA1/ycvZgdxcIgXDUwP4JeTLwYZudTdbIu1PO8M2eu//zIgsCw
+            k11+ohauPIDqFjr29VpCDinWiNG4PEOFk8wIA5Fe1yHlkgHtIpwwmcZga5zsmN6T
+            W0jBJHfu/gccUd6IvoYOzssk5u7Wp3mqN2mVPdoIea8J+HmAYl+DjJOcm1Qn/DS1
+            P+NTSeCOfTa75tYSePFbkKLxrGg2wNpeV8s64jLaUmWITxI4pusWeXSgdo1il52J
+            3qWNacT7DUv7bLWRwtZBpXn/N/ZHI33YiB5mFclIaLUQVoNEt1w9GKwKmW8cmnPk
+            /J1uAbX7QnehG7TUVsPOcUdjWXUDV6gdK3TiywIDAQABAoIBAAWQJBleCaZGUb8O
+            P6fjG7quPZKo8qVdaYdin75TNVaylBeKDwI8rj5Ohz5Xs6/O5P18zaa/vR7ZB/3F
+            X3NnFe3BmMfBv7/6/LiffUD4sxMSf6WQVgtL3G2sCSPR2xDgwnTlzwvUf6bTEARQ
+            ReoXdhiZvQ4lTARyXLQr8Z91TdtSS3hMLOjel+5EDZp/IiWUk+zcEXZrxdpUiDRx
+            LkEAfonPhKdTDcRO6ZheHAeCT+Rp3pCYMhH2skbaKZ+Htj+Ifbpk3HPp6gusvyCd
+            PKMSKbxvjEn17gATnaE27ejPbhY+Jmw+LwA5m99G6HwQHsRp6B8XFiAKw75+A6Pm
+            iWAYMcECgYEA7Qxd++ze4qxKZSrqKJyY7FkEHbRuhWGFh6J1Kg7AJ0+yfnF/nL2R
+            UyP80qXsijqxOLUpW2cNW+GeSZS1844mhoFMA53owXGgvFdvE4PEN6GXeGmyuKGp
+            kn+cF2kFiDEHapN8Q7C10Dyzc+zJLZ1wbB8QAtZ3U4a8ioCVF37FfycCgYEA6UEu
+            gL+uLSYU98we+uqVfUMc0EnRf/4WeF+zqG2hl3garVfXzVVX9ps9rIdY3DCsZPYN
+            3NnAzTPDIgxnDNZBz15EDCr/9VgcF+/LPkweAI/nsW+BvexqbFQteXD2wKM2dQAz
+            zTcvyoa2IPgq/R5RELYAp1a8E0W273NBiiDrxb0CgYAIlF4CdDxM7/dxWfBHsANI
+            6p/fg1xMr47prdOXxhjmU1geg3Ue8y2DWNYZua+qAR3Q852flUdCgBP+jcdYHVj/
+            nUZnCxwVhEtRBckbZ7V+XfbhgNHbJN7CUqQPpNlyaHPgQ55HxOmPs+K622Mcp4oe
+            H7GwqJqBB2tjh+vdgdUcGQKBgQDBhij0/ROftebTqPFTMOoSYWo4jeZZkRBHku9W
+            II9fQnCvvR/45oPywN4slKbvGRsPMO5Te/7wwa92QmAFUIaNbCJ9DfgLMK0uVu+D
+            oleKE9shZeh5EPtDIZwRE95F+aQm8qIH82+dUqMtO3k/RLXxbW+hZt7oBoE+rZuE
+            5Md46QKBgQDsJzfAJykzgR8tr8CK/mj3XNrRobdYAwi3dZvRbw7h0fC32/5TdIBg
+            6zNjW3iE9YIQak9s8m4AXS/3W49L/yRQLymeh02Rfuh/0wFiUTEC7gQFy2s65thL
+            nbL+9ev6CzT/tT9H6oxstnGSExpLf6QM1PU8BjTNCACw9yOTRMhn5w==
+            -----END RSA PRIVATE KEY-----
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
